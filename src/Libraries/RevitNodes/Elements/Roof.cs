@@ -146,7 +146,7 @@ namespace Revit.Elements
         /// Create a Revit Roof given its curve outline and Level
         /// </summary>
         /// <param name="outline"></param>
-        /// <param name="RoofType"></param>
+        /// <param name="roofType"></param>
         /// <param name="level"></param>
         /// <returns>The Roof</returns>
         public static Roof ByOutlineTypeAndLevel(Curve[] outline, RoofType roofType, Level level)
@@ -159,8 +159,11 @@ namespace Revit.Elements
             }
 
             var ca = new CurveArray();
-            polycurve.Curves().ForEach(x => ca.Append(x.ToRevitType()));
-
+            polycurve.Curves().ForEach(x => {
+                ca.Append(x.ToRevitType());
+                x.Dispose();
+                });
+            
             var roof = new Roof(ca, level.InternalLevel,roofType.InternalRoofType);
             DocumentManager.Regenerate();
             return roof;
@@ -179,13 +182,16 @@ namespace Revit.Elements
         public static Roof ByOutlineExtrusionTypeAndLevel(PolyCurve outline, RoofType roofType, Level level, ReferencePlane plane, double extrusionStart, double extrusionEnd)
         {
 
-            if (!outline.IsClosed)
+            if (outline.IsClosed)
             {
-                throw new ArgumentException(Properties.Resources.OpenInputPolyCurveError);
+                throw new ArgumentException(Properties.Resources.CloseInputPolyCurveError);
             }
 
             var ca = new CurveArray();
-            outline.Curves().ForEach(x => ca.Append(x.ToRevitType()));
+            outline.Curves().ForEach(x => {
+                ca.Append(x.ToRevitType());
+                x.Dispose();
+                });
 
             var roof = new Roof(ca, plane.InternalReferencePlane, level.InternalLevel, roofType.InternalRoofType, extrusionStart, extrusionEnd);
             DocumentManager.Regenerate();

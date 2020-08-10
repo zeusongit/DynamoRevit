@@ -45,6 +45,9 @@
     <NoWarn>618</NoWarn>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
+  <PropertyGroup>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DynamoApplications">
       <HintPath>$(PACKAGESPATH)\DynamoVisualProgramming.Core\lib\net47\DynamoApplications.dll</HintPath>
@@ -202,6 +205,9 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PostBuildEvent>if exist $(ProjectDir)PostBuildStep.bat call $(ProjectDir)PostBuildStep.bat $(SolutionDir)</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

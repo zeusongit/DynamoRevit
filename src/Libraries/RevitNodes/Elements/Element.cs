@@ -5,6 +5,8 @@ using Autodesk.DesignScript.Geometry;
 using Autodesk.DesignScript.Interfaces;
 using Autodesk.DesignScript.Runtime;
 using Autodesk.Revit.DB;
+using DynamoUnits;
+using Revit.Elements.InternalUtilities;
 using Revit.GeometryConversion;
 using Revit.GeometryReferences;
 using RevitServices.Elements;
@@ -124,6 +126,10 @@ namespace Revit.Elements
                 TransactionManager.Instance.EnsureInTransaction(Document);
                 DocumentManager.Regenerate();
                 var bb = InternalElement.get_BoundingBox(null);
+                if (bb == null) 
+                {
+                    bb = InternalElement.get_BoundingBox(Document.GetElement(InternalElement.OwnerViewId) as Autodesk.Revit.DB.View);
+                }
                 TransactionManager.Instance.TransactionTaskDone();
                 return bb.ToProtoType();
             }
@@ -152,6 +158,32 @@ namespace Revit.Elements
         }
 
         /// <summary>
+        /// Get the Element Pinned status
+        /// </summary>
+        public bool IsPinned
+        {
+            get 
+            {
+                if (InternalElement == null)
+                    return false;
+                return this.InternalElement.Pinned; 
+            }
+        }
+
+        /// <summary>
+        /// Checks if two elements are joined
+        /// </summary>
+        /// <param name="otherElement">Second element to check</param>
+        /// <returns>True if the two elements are joined, False otherwise</returns>
+        public bool AreJoined(Element otherElement)
+        {
+            return JoinGeometryUtils.AreElementsJoined(
+                Document,
+                this.InternalElement,
+                otherElement.InternalElement);
+        }
+
+        /// <summary>
         /// A reference to the element
         /// </summary>
         [SupressImportIntoVM]
@@ -171,23 +203,19 @@ namespace Revit.Elements
         }
 
         /// <summary>
-        /// Returns the FamilyType for this Element. Returns null if the Element cannot have a FamilyType assigned.
+        /// Returns the ElementType for this Element. Returns null if the Element cannot have an ElementType assigned.
         /// </summary>
         /// <returns name="ElementType">Element Type or Null.</returns>
-        public Element ElementType
+        public ElementType ElementType
         {
             get
             {
                 var typeId = this.InternalElement.GetTypeId();
                 if (typeId == ElementId.InvalidElementId)
-                {
                     return null;
-                }
-                else
-                {
-                    var doc = DocumentManager.Instance.CurrentDBDocument;
-                    return doc.GetElement(typeId).ToDSType(true);
-                }
+                
+                var doc = DocumentManager.Instance.CurrentDBDocument;
+                return doc.GetElement(typeId).ToDSType(true) as ElementType;
             }
         }
 
@@ -243,6 +271,19 @@ namespace Revit.Elements
             // Do not delete Revit owned elements
             if (!IsRevitOwned && remainingBindings == 0 && !didRevitDelete)
             {
+                if(this.InternalElement is View && InternalElement.IsValidObject)
+                {
+                    Autodesk.Revit.UI.UIDocument uIDocument = new Autodesk.Revit.UI.UIDocument(Document);
+                    var openedViews = uIDocument.GetOpenUIViews().ToList();
+                    var shouldClosedViews = openedViews.FindAll(x => InternalElement.Id == x.ViewId);
+                    foreach (var v in shouldClosedViews)
+                    {
+                        if (uIDocument.GetOpenUIViews().ToList().Count() > 1)
+                            v.Close();
+                        else
+                            throw new InvalidOperationException(string.Format(Properties.Resources.CantCloseLastOpenView, this.ToString()));
+                    }
+                }
                 DocumentManager.Instance.DeleteElement(new ElementUUID(InternalUniqueId));
             }
             else
@@ -285,7 +326,6 @@ namespace Revit.Elements
         /// <summary>
         /// Get hash code.
         /// </summary>
-        /// <param name="obj"></param>
         /// <returns></returns>
         [IsVisibleInDynamoLibrary(false)]
         public override int GetHashCode()
@@ -308,6 +348,46 @@ namespace Revit.Elements
             // or transactions and which must necessarily be threaded in a specific way.
         }
 
+        /// <summary>
+        /// Delete the element and any elements that are totally dependent upon the element. 
+        /// </summary>
+        /// <param name="element">The element to delete.</param>
+        /// <returns>The list of element id's deleted, including any dependent elements.</returns>
+        /// <exception cref="System.ArgumentNullException">Thrown if element is null.</exception>
+        public static int[] Delete(Element element)
+        {
+            if (element == null)
+            {
+                throw new ArgumentNullException("element");
+            }
+
+            // Collection of elements deleted
+            int[] deletedElements = null;
+
+            try
+            {
+                // Document to work with
+                Autodesk.Revit.DB.Document document = DocumentManager.Instance.CurrentDBDocument;
+
+                // Start the transaction
+                TransactionManager.Instance.EnsureInTransaction(document);
+
+                // Delete the element, collecting the id's deleted.
+                deletedElements = document.Delete(element.InternalElementId)
+                        .Select(x => x.IntegerValue).ToArray<int>();
+            }
+            finally
+            {
+                // handle transaction cleanup based on successful deletion or not. 
+                if (deletedElements == null || deletedElements.Length == 0)
+                    TransactionManager.Instance.ForceCloseTransaction();
+                else
+                    TransactionManager.Instance.TransactionTaskDone();
+            }
+
+            // return deleted elements
+            return deletedElements; 
+        }
 
         /// <summary>
         /// Get a parameter by name of an element
@@ -461,6 +541,56 @@ namespace Revit.Elements
             return converted.ToArray();
         }
 
+        /// <summary>
+        /// Gets all elements hosted by the supplied element
+        /// </summary>
+        /// <param name="includeOpenings">Include rectangular openings in output</param>
+        /// <param name="includeHostedElementsOfJoinedHosts">Include the hosted elements from the multiple joined hosts in output</param>
+        /// <param name="includeEmbeddedWalls">Include embedded walls in output</param>
+        /// <param name="includeSharedEmbeddedInserts">Include shared embedded elements in output</param>
+        /// <returns>Hosted Elements</returns>
+        public IEnumerable<Element> GetHostedElements(
+            bool includeOpenings = false,
+            bool includeHostedElementsOfJoinedHosts = false,
+            bool includeEmbeddedWalls = false,
+            bool includeSharedEmbeddedInserts = false)
+        {
+
+            var hostObject = this.InternalElement as HostObject;
+            if (hostObject == null)
+                throw new NullReferenceException(Properties.Resources.NotHostElement);
+
+            IList<ElementId> inserts = hostObject
+                .FindInserts(includeOpenings,
+                             includeHostedElementsOfJoinedHosts,
+                             includeEmbeddedWalls,
+                             includeSharedEmbeddedInserts);
+
+            // Get all hosted elements from their Id's 
+            // and convert them to DS type
+            List<Element> hostedElements = new List<Element>();
+            for (int i = 0; i < inserts.Count; i++)
+            {
+                Element elem = Document.GetElement(inserts[i]).ToDSType(true);
+                hostedElements.Add(elem);
+            }
+            return hostedElements;
+        }
+
+        /// <summary>
+        /// Sets an existing element's pinned status
+        /// </summary>
+        /// <param name="pinned">Value for pin status true/false</param>
+        public Element SetPinnedStatus(bool pinned)
+        {
+            if (this.InternalElement.Pinned == pinned) return this;
+
+            TransactionManager.Instance.EnsureInTransaction(Application.Document.Current.InternalDocument);
+            this.InternalElement.Pinned = pinned;
+            TransactionManager.Instance.TransactionTaskDone();
+            return this;
+        }
+
         #region Geometry extraction
 
         /// <summary>
@@ -490,6 +620,19 @@ namespace Revit.Elements
                     };
                     geomElement = thisElement.get_Geometry(goptions1);
                 }
+            }
+
+            // FamilySymbol is a special case: the symbol must be activated before geometry is available, unless an instance is already present in the model
+            else if ((thisElement is FamilySymbol) && (geomElement == null || !geomElement.Any()))
+            {
+                var fs = (FamilySymbol)thisElement;
+                if (!fs.IsActive)
+                {
+                    fs.Activate();
+                    DocumentManager.Regenerate();
+                    geomElement = fs.get_Geometry(goptions0);
+                }
+
             }
 
             return CollectConcreteGeometry(geomElement, useSymbolGeometry);
@@ -653,8 +796,349 @@ namespace Revit.Elements
             }
         }
 
-        #region Location extraction & manipulation
+        /// <summary>
+        /// Gets the child Elements of the current Element.
+        /// </summary>
+        /// <returns>Child Elements.</returns>
+        public IEnumerable<Element> GetChildElements()
+        {
+            return GetElementChildren(this.InternalElement);
+            
+        }
 
+        private IEnumerable<Element> GetElementChildren(Autodesk.Revit.DB.Element element)
+        {
+            List<Element> components = new List<Element>();
+            int categoryId = element.Category.Id.IntegerValue;
+            if (!Enum.IsDefined(typeof(BuiltInCategory), categoryId))
+                throw new InvalidOperationException(Properties.Resources.NotBuiltInCategory);
+
+            BuiltInCategory builtInCategory = (BuiltInCategory)System.Enum.Parse(typeof(BuiltInCategory),
+                                                                                 categoryId.ToString());
+
+
+            // By default we use the GetSubComponentIds() on the elements FamilyInstance, 
+            // for now the node also handles special cases including Stairs, StructuralFramingSystems and Railings 
+            switch (builtInCategory)
+            {
+                case BuiltInCategory.OST_Stairs:
+                    List<Element> stairComponentElements = GetChildElementsFromStairs(element);
+                    components.AddRange(stairComponentElements);
+                    break;
+
+                case BuiltInCategory.OST_StructuralFramingSystem:
+                    List<Element> beamSystemComponentElements = GetChildElementsFromStructuralFramingSystem(element);
+                    components.AddRange(beamSystemComponentElements);
+                    break;
+
+                case BuiltInCategory.OST_StairsRailing:
+                    List<Element> railingComponentElements = GetChildElementsFromRailings(element);
+                    components.AddRange(railingComponentElements);
+                    break;
+
+                default:
+                    List<Element> componentElements = GetChildElementsFromFamilyInstance(element);
+                    components.AddRange(componentElements);
+                    break;
+            }
+            return components;
+        }
+
+        private static List<Element> GetChildElementsFromFamilyInstance(Autodesk.Revit.DB.Element element)
+        {
+            var familyInstance = element as Autodesk.Revit.DB.FamilyInstance;
+            if (familyInstance == null)
+                throw new NullReferenceException(Properties.Resources.ChildElementsNotSupported);
+
+            List<ElementId> componentIds = familyInstance.GetSubComponentIds().ToList();
+            if (componentIds.Count == 0 || componentIds == null)
+                throw new NullReferenceException(Properties.Resources.NoChildElements);
+
+            List<Element> componentElements = componentIds.Select(id => Document.GetElement(id).ToDSType(true))
+                                                           .ToList();
+            return componentElements;
+        }
+
+        private static List<Element> GetChildElementsFromRailings(Autodesk.Revit.DB.Element element)
+        {
+            var railingElement = element as Autodesk.Revit.DB.Architecture.Railing;
+            List<ElementId> railingComponentIds = new List<ElementId>();
+            // For Railings we get the HandRails and the TopRail as child elements 
+            railingComponentIds.AddRange(railingElement.GetHandRails().ToList());
+            railingComponentIds.Add(railingElement.TopRail);
+
+            if (railingComponentIds.Count == 0)
+                throw new InvalidOperationException(Properties.Resources.NoChildElements);
+
+            List<Element> railingComponentElements = railingComponentIds.Select(id => Document.GetElement(id).ToDSType(true))
+                                                                         .ToList();
+            return railingComponentElements;
+        }
+
+        private static List<Element> GetChildElementsFromStructuralFramingSystem(Autodesk.Revit.DB.Element element)
+        {
+            var beamSystemElement = element as Autodesk.Revit.DB.BeamSystem;
+            // For Beam systems we get each indivdual Beam as the childs
+            List<ElementId> beamSystemComponentIds = beamSystemElement.GetBeamIds().ToList();
+
+            if (beamSystemComponentIds.Count == 0)
+                throw new InvalidOperationException(Properties.Resources.NoChildElements);
+
+            List<Element> beamSystemComponentElements = beamSystemComponentIds
+                .Select(id => Document.GetElement(id).ToDSType(true))
+                .ToList();
+            return beamSystemComponentElements;
+        }
+
+        private static List<Element> GetChildElementsFromStairs(Autodesk.Revit.DB.Element element)
+        {
+            var stairElement = element as Autodesk.Revit.DB.Architecture.Stairs;
+            List<ElementId> stairComponentIds = new List<ElementId>();
+
+            // For stairs we get Landings, Runs and Supports as the child Elements,
+            // using the following methods.
+            stairComponentIds.AddRange(stairElement.GetStairsLandings().ToList());
+            stairComponentIds.AddRange(stairElement.GetStairsRuns().ToList());
+            stairComponentIds.AddRange(stairElement.GetStairsSupports().ToList());
+            if (stairComponentIds.Count == 0)
+                throw new InvalidOperationException(Properties.Resources.NoChildElements);
+
+            List<Element> stairComponentElements = stairComponentIds.Select(id => Document.GetElement(id).ToDSType(true))
+                                                                     .ToList();
+            return stairComponentElements;
+        }
+
+        /// <summary>
+        /// Gets the parent element of the Element.
+        /// </summary>
+        /// <returns>Parent Element</returns>
+        public Element GetParentElement()
+        {
+            return GetParentElementFromElement(this.InternalElement);
+        }
+
+        private Element GetParentElementFromElement(Autodesk.Revit.DB.Element element)
+        {
+            Autodesk.Revit.DB.Element parent;
+            int categoryId = element.Category.Id.IntegerValue;
+            if (!Enum.IsDefined(typeof(BuiltInCategory), categoryId))
+                throw new InvalidOperationException(Properties.Resources.NotBuiltInCategory);
+
+            BuiltInCategory builtInCategory = (BuiltInCategory)System.Enum.Parse(typeof(BuiltInCategory),
+                                                                                 categoryId.ToString());
+
+            // By default we use the SuperComponent on the elements FamilyInstance to get the Parent Element, 
+            // for now the node also handles special cases including Stairs, StructuralFramingSystems and Railings 
+            switch (builtInCategory)
+            {
+                case BuiltInCategory.OST_StairsLandings:
+                    parent = GetParentComponentFromStairElements(element);
+                    break;
+
+                case BuiltInCategory.OST_StairsRuns:
+                    parent = GetParentComponentFromStairElements(element);
+                    break;
+
+                case BuiltInCategory.OST_StructuralFraming:
+                    parent = GetParentElementFromStructuralFraming(element);
+                    break;
+
+                case BuiltInCategory.OST_RailingHandRail:
+                    parent = GetParentElementFromRailingElements(element);
+                    break;
+
+                case BuiltInCategory.OST_RailingTopRail:
+                    parent = GetParentElementFromRailingElements(element);
+                    break;
+
+                default:
+                    parent = GetParentElementFromFamilyInstance(element);
+                    break;
+            }
+            if (parent == null)
+                throw new InvalidOperationException(Properties.Resources.NoParentElement);
+            return parent.ToDSType(true);
+        }
+
+        private static Autodesk.Revit.DB.Element GetParentElementFromFamilyInstance(Autodesk.Revit.DB.Element element)
+        {
+            Autodesk.Revit.DB.Element parent;
+            var familyInstance = element as Autodesk.Revit.DB.FamilyInstance;
+
+            if (familyInstance == null)
+                throw new InvalidOperationException(Properties.Resources.NoParentElement);
+
+            parent = familyInstance.SuperComponent;
+            return parent;
+        }
+
+        private static Autodesk.Revit.DB.Element GetParentElementFromRailingElements(Autodesk.Revit.DB.Element element)
+        {
+            Autodesk.Revit.DB.Element parent;
+            var railingElement = element as Autodesk.Revit.DB.Architecture.ContinuousRail;
+            ElementId hostId = railingElement.HostRailingId;
+
+            if (hostId == null)
+                throw new InvalidOperationException(Properties.Resources.NoParentElement);
+
+            // For Railings we return the Host as the Parent element
+            parent = Document.GetElement(hostId);
+            return parent;
+        }
+
+        private static Autodesk.Revit.DB.Element GetParentElementFromStructuralFraming(Autodesk.Revit.DB.Element element)
+        {
+            Autodesk.Revit.DB.Element parent;
+            var beam = element as Autodesk.Revit.DB.FamilyInstance;
+
+            if (beam == null)
+                throw new InvalidOperationException(Properties.Resources.NoParentElement);
+
+            // For Beam systems we get each indivdual Beam as the childs
+            parent = BeamSystem.BeamBelongsTo(beam);
+            return parent;
+        }
+
+        private static Autodesk.Revit.DB.Element GetParentComponentFromStairElements(Autodesk.Revit.DB.Element element)
+        {
+            Autodesk.Revit.DB.Element parent;
+            var stairElement = element as Autodesk.Revit.DB.Architecture.StairsLanding;
+
+            if (stairElement == null)
+                throw new InvalidOperationException(Properties.Resources.NoParentElement);
+
+            // For StairLandings and StairRuns we use the GetStairs() to retrive the parent Stair
+            parent = stairElement.GetStairs();
+            return parent;
+        }
+
+        #region Geometry Join
+        /// <summary>
+        /// Finds the elements whose geometry is joined with the given element.
+        /// </summary>
+        /// <returns>All elements whose geometry is joined to the given element.</returns>
+        public IEnumerable<Element> GetJoinedElements()
+        {
+            return JoinGeometryUtils.GetJoinedElements(Document, this.InternalElement)
+                .Select(id => Document.GetElement(id).ToDSType(true))
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets all Elements intersecting the input element, that are of a specific category.
+        /// </summary>
+        /// <param name="category">Category of Elements to check intersection against</param>
+        /// <returns>List of intersection elements of the specified category</returns>
+        public IEnumerable<Element> GetIntersectingElementsOfCategory(Category category)
+        {
+            BuiltInCategory builtInCategory = (BuiltInCategory)System.Enum.Parse(typeof(BuiltInCategory),
+                                                                                 category.InternalCategory.Id.ToString());
+
+            ElementIntersectsElementFilter filter = new ElementIntersectsElementFilter(this.InternalElement);
+            FilteredElementCollector intersecting = new FilteredElementCollector(Document).WherePasses(filter)
+                                                                                          .OfCategory(builtInCategory);
+            if (!intersecting.Any())
+                return new List<Element>();
+
+            return intersecting.Select(x => x.ToDSType(true)).ToList();
+        }
+
+        /// <summary>
+        /// Unjoin the geometry of two Elements.
+        /// </summary>
+        /// <param name="otherElement">Other element to unjoin from the element.</param>
+        /// <returns>The input elements with their geometry unjoined.</returns>
+        public IEnumerable<Element> UnjoinGeometry(Element otherElement)
+        {
+            if (!JoinGeometryUtils.AreElementsJoined(Document, this.InternalElement, otherElement.InternalElement))
+                throw new InvalidOperationException(Properties.Resources.NotJoinedElements);
+
+            TransactionManager.Instance.EnsureInTransaction(Document);
+            JoinGeometryUtils.UnjoinGeometry(
+                        Document,
+                        this.InternalElement,
+                        otherElement.InternalElement);
+            TransactionManager.Instance.TransactionTaskDone();
+            return new List<Element>() { this, otherElement };
+        }
+
+        /// <summary>
+        /// Unjoins the geometry of all elements from each other if they are joined.
+        /// This performs only one transaction in Revit.
+        /// </summary>
+        /// <param name="elements">List of elements to unjoin from each other</param>
+        /// <returns>All input Elements, with their geometry now unjoined from each other.</returns>
+        public static IEnumerable<Element> UnjoinAllGeometry(List<Element> elements)
+        {
+            TransactionManager.Instance.EnsureInTransaction(Document);
+            for (int i = 0; i < elements.Count; i++)
+            {
+                List<Element> joinedElements = JoinGeometryUtils.GetJoinedElements(Document, elements[i].InternalElement)
+                                                                .Select(id => Document.GetElement(id).ToDSType(true))
+                                                                .ToList();
+                if (joinedElements.Count <= 0)
+                    continue;
+
+                for (int j = 0; j < joinedElements.Count; j++)
+                {
+                    JoinGeometryUtils.UnjoinGeometry(
+                        Document,
+                        elements[i].InternalElement,
+                        joinedElements[j].InternalElement);
+                }
+            }
+            TransactionManager.Instance.TransactionTaskDone();
+            return elements;
+        }
+        
+        /// <summary>
+        /// Sets the order in which the geometry of two elements is joined.
+        /// </summary>
+        /// <param name="cuttingElement">The element that should be cutting the other element</param>
+        /// <param name="otherElement">The other element that is being cut by the cuttingElement</param>
+        /// <returns>Input elements with the geometry join order updated.</returns>
+        public static IEnumerable<Element> SetGeometryJoinOrder(Element cuttingElement, Element otherElement)
+        {
+            if (!JoinGeometryUtils.AreElementsJoined(Document, cuttingElement.InternalElement, otherElement.InternalElement))
+            {
+                throw new InvalidOperationException(Properties.Resources.InvalidSwitchJoinOrder);
+            }
+            if (JoinGeometryUtils.IsCuttingElementInJoin(Document, cuttingElement.InternalElement, otherElement.InternalElement))
+            {
+                return new List<Element>() { cuttingElement, otherElement };
+            }         
+            TransactionManager.Instance.EnsureInTransaction(Document);
+            JoinGeometryUtils.SwitchJoinOrder(Document, cuttingElement.InternalElement, otherElement.InternalElement);
+            TransactionManager.Instance.TransactionTaskDone();
+            return new List<Element>() { cuttingElement, otherElement };
+        }
+        
+        /// <summary>
+        /// Joins the geometry of two elements, if they are intersecting.
+        /// </summary>
+        /// <param name="otherElement">Other element to join with</param>
+        /// <returns>The two joined elements</returns>
+        public IEnumerable<Element> JoinGeometry(Element otherElement)
+        {
+            var joinedElements = new List<Element>() { this, otherElement };
+            if (JoinGeometryUtils.AreElementsJoined(Document, this.InternalElement, otherElement.InternalElement))
+                return joinedElements;
+
+            ElementIntersectsElementFilter filter = new ElementIntersectsElementFilter(otherElement.InternalElement);
+            ICollection<Autodesk.Revit.DB.Element> collector = new FilteredElementCollector(Document).WherePasses(filter).ToElements();
+
+            if (collector.Count == 0)
+                throw new InvalidOperationException(Properties.Resources.NonIntersectingElements);
+
+            TransactionManager.Instance.EnsureInTransaction(Document);
+            JoinGeometryUtils.JoinGeometry(Document, this.InternalElement, otherElement.InternalElement);
+            TransactionManager.Instance.TransactionTaskDone();
+
+            return joinedElements;
+        }
+        #endregion
+
+        #region Location extraction & manipulation
         /// <summary>
         /// Update an existing element's location
         /// </summary>
@@ -694,7 +1178,7 @@ namespace Revit.Elements
         }
 
         /// <summary>
-        /// Get an exsiting element's location
+        /// Get an existing element's location
         /// </summary>
         /// <returns>Location Geometry</returns>
         public Geometry GetLocation()
@@ -726,7 +1210,6 @@ namespace Revit.Elements
                 throw new Exception(Properties.Resources.InvalidElementLocation);
             }
         }
-
 
         #endregion
 

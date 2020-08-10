@@ -423,4 +423,109 @@
   <data name="VectorDataObsolete" xml:space="preserve">
     <value>Use VectorAnalysisDisplay.ByViewPointsAndVectorValues instead.</value>
   </data>
+  <data name="NoChildElements" xml:space="preserve">
+    <value>Element has no child Elements</value>
+  </data>
+  <data name="NoParentElement" xml:space="preserve">
+    <value>Element has no parent component</value>
+  </data>
+  <data name="NotHostElement" xml:space="preserve">
+    <value>Element is not a Host Element</value>
+  </data>
+  <data name="NotJoinedElements" xml:space="preserve">
+    <value>Cannot unjoin Elements that are not already joined.</value>
+  </data>
+  <data name="InvalidSwitchJoinOrder" xml:space="preserve">
+    <value>Geometry join order can only be switched when the elements are already joined.</value>
+  </data>
+  <data name="NonIntersectingElements" xml:space="preserve">
+    <value>Elements are not intersecting</value>
+  </data>
+  <data name="EmptyView" xml:space="preserve">
+    <value>Cannot place empty view on sheet.</value>
+  </data>
+  <data name="ViewAlreadyPlacedOnSheet" xml:space="preserve">
+    <value>Cannot place view on sheet as it is already on a sheet.</value>
+  </data>
+  <data name="InvalidGroupType" xml:space="preserve">
+    <value>{0} is not a valid GroupType.</value>
+  </data>
+  <data name="AttachedGroupLocation" xml:space="preserve">
+    <value>Cannot get location of attached group.</value>
+  </data>
+  <data name="ElementTypeNameNotFound" xml:space="preserve">
+    <value>There is no ElementType of the given name in the current Document</value>
+  </data>
+  <data name="NoStructuralMaterialAssigned" xml:space="preserve">
+    <value>FloorType has no structural material assigned</value>
+  </data>
+  <data name="ChildElementsNotSupported" xml:space="preserve">
+    <value>Getting child elements is not supported for this type of Element.</value>
+  </data>
+  <data name="NotBuiltInCategory" xml:space="preserve">
+    <value>Element not valid. Use an element from a BuiltInCategory.</value>
+  </data>
+  <data name="DocumentNotWorkshared" xml:space="preserve">
+    <value>Current Document is not workshared</value>
+  </data>
+  <data name="NoElementsToPurge" xml:space="preserve">
+    <value>No Elements to purge in the current document.</value>
+  </data>
+  <data name="InvalidElementId" xml:space="preserve">
+    <value>Id is not a valid ElementId, GUID, string or int.</value>
+  </data>
+  <data name="WrongStorageType" xml:space="preserve">
+    <value>Input value for this parameter needs to be of type {0}.</value>
+  </data>
+  <data name="DocumentNotFamilyDocument" xml:space="preserve">
+    <value>Document is not a valid Family Document.</value>
+  </data>
+  <data name="FamilyTypeDoesNotExist" xml:space="preserve">
+    <value>Family type does not exist in the document.</value>
+  </data>
+  <data name="RoomsForLongestPathNotFound" xml:space="preserve">
+    <value>Rooms are required to compute longest Paths of Travel.</value>
+  </data>
+  <data name="InvalidPathOfTravel" xml:space="preserve">
+    <value>Invalid PathOfTravel element.</value>
+  </data>
+  <data name="CloseInputPolyCurveError" xml:space="preserve">
+    <value>The input PolyCurve is closed.</value>
+  </data>
+  <data name="EmptySchedule" xml:space="preserve">
+    <value>Cannot place empty schedule on sheet.</value>
+  </data>
+  <data name="DuplicateViewCantApplySheet" xml:space="preserve">
+    <value>Please use Sheet.Duplicate node to Duplicate sheets</value>
+  </data>
+  <data name="ElementCantDelete" xml:space="preserve">
+    <value>This Element {0} {1} cannot be deleted</value>
+  </data>
+  <data name="SheetDuplicateNeedFix" xml:space="preserve">
+    <value>You must set a prefix or suffix to avoid duplicate sheet number</value>
+  </data>
+  <data name="SheetNumberExists" xml:space="preserve">
+    <value>The Sheet number {0} exists, please change your prefix or suffix</value>
+  </data>
+  <data name="ViewCantBeDuplicated" xml:space="preserve">
+    <value>This View {0} can't be duplicated</value>
+  </data>
+  <data name="ViewCantPackOnSheet" xml:space="preserve">
+    <value>View {0} could not be packed on the Sheet.  The sheet is {1} x {2} and the view to be added is {3} x {4}</value>
+  </data>
+  <data name="ViewDuplicateOptionOutofRange" xml:space="preserve">
+    <value>ViewDuplicateOption is invalid, please set input number should be 0, 1, 2</value>
+  </data>
+  <data name="ViewNameExists" xml:space="preserve">
+    <value>The View name {0} exists, please change your prefix or suffix</value>
+  </data>
+  <data name="CantCloseLastOpenView" xml:space="preserve">
+    <value>This is the last opened view {0} , can't be delete</value>
+  </data>
+  <data name="Sheet_NoLocationSet" xml:space="preserve">
+    <value>Must supply more than 0 locations.</value>
+  </data>
+  <data name="Sheet_ViewLocationMismatch" xml:space="preserve">
+    <value>View count should Equals location count.</value>
+  </data>
 </root>

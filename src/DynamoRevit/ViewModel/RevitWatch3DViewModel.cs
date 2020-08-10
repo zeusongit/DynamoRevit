@@ -236,7 +236,7 @@ namespace Dynamo.Applications.ViewModel
             try
             {
                 // we scale the tesselation rather than the curve
-                var conv = UnitConverter.DynamoToHostFactor(UnitType.UT_Length);
+                var conv = UnitConverter.DynamoToHostFactor(SpecTypeId.Length);
 
                 // use the ASM tesselation of the curve
                 var pkg = renderPackageFactory.CreateRenderPackage();
@@ -374,14 +374,14 @@ namespace Dynamo.Applications.ViewModel
    
             // Never access the current document with an invalid keeperId
             // See comment at the beginning of this method.
-            var dbDoc = DocumentManager.Instance.CurrentDBDocument;
+            var dbDoc = DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument.Document;
             if (null == dbDoc)
             {
                 return;
             }
 
             TransactionManager.Instance.EnsureInTransaction(dbDoc);
-            DocumentManager.Instance.CurrentUIDocument.Document.Delete(keeperId);
+            dbDoc.Delete(keeperId);
             TransactionManager.Instance.ForceCloseTransaction();
         }
 

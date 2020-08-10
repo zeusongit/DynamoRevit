@@ -17,6 +17,7 @@ namespace RevitSystemTests
     [TestFixture]
     class ViewTests : RevitSystemTestBase
     {
+        private const double Tolerance = 0.001;
 
         [Test]
         [TestModel(@".\View\AxonometricView.rfa")]
@@ -102,6 +103,150 @@ namespace RevitSystemTests
             var tmp2Info = new FileInfo(tmp2);
             Assert.Greater(tmp2Info.Length, 0);
 
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void DuplicateView()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\DuplicateView.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            string viewName = "TestEast";
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var view = GetPreviewValue("615443943b9b492986c7ad29f5bb5358") as Revit.Elements.Views.View;
+            Assert.AreEqual(viewName, view.Name);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CropBoxofView()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CropBoxofView.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var CropBox = GetPreviewValue("8695703491164e5bb007157631b13638") as Autodesk.DesignScript.Geometry.BoundingBox;
+            Assert.IsNotNull(CropBox);
+
+            var IsActive = (bool)GetPreviewValue("9973abd4f58f4467bdcd136b03a46fd4");
+            Assert.IsTrue(IsActive);
+
+            var IsVisible = (bool)GetPreviewValue("4a6ebc027a5c401aba16541a3ef668db");
+            Assert.IsTrue(IsVisible);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CanGetView3dSpaceProperties()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CanGetView3dSpaceProperties.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            int expectedScale = 100;
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var Origin = GetPreviewValue("d6feec0d3c5247af874496eca0a60015") as Autodesk.DesignScript.Geometry.Point;
+            Assert.IsNotNull(Origin);
+
+            var Outline = GetPreviewValue("3346ceebd2ed460abb5a2d5f9891aac1") as Autodesk.DesignScript.Geometry.BoundingBox;
+            Assert.IsNotNull(Outline);
+
+            var RightDirection = GetPreviewValue("169e149c912143a0b211a6060745e4df") as Autodesk.DesignScript.Geometry.Vector;
+            Assert.IsNotNull(RightDirection);
+
+            var ViewDirection = GetPreviewValue("593868bf4d5b4bd3bbe53cdf25340198") as Autodesk.DesignScript.Geometry.Vector;
+            Assert.IsNotNull(ViewDirection);
+
+            var scale = GetPreviewValue("15c8e8f6bffb46bfad5a65900114dc5f");
+            Assert.AreEqual(expectedScale, scale);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CanGetSetDiscipline()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CanGetSetDiscipline.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+            
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var discipline = GetPreviewValue("60c8ce7365214955967367cf21b85762");
+            Assert.AreEqual("Structural", discipline);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CanGetSetDisplayStyle()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CanGetSetDisplayStyle.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var displayStyle = GetPreviewValue("269cd16b16ee4b80a8fe6195374c884a");
+            Assert.AreEqual("Shading", displayStyle);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CanGetSetSketchPlane()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CanGetSetSketchPlane.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var sketchPlane = GetPreviewValue("bc12df8c2efc44d19a208a83b16e1709") as SketchPlane;
+            var plane = sketchPlane.Plane;
+            Assert.AreEqual(0.000, plane.Origin.X, Tolerance);
+            Assert.AreEqual(0.000, plane.Origin.Y, Tolerance);
+            Assert.AreEqual(2.000, plane.Origin.Z, Tolerance);
+        }
+
+        [Test]
+        [TestModel(@".\SampleModel.rvt")]
+        public void CanGetSetPartsVisibility()
+        {
+            // Arrange
+            string samplePath = Path.Combine(workingDirectory, @".\View\CanGetSetPartsVisibility.dyn");
+            string testPath = Path.GetFullPath(samplePath);
+
+            // Act
+            ViewModel.OpenCommand.Execute(testPath);
+            RunCurrentModel();
+
+            // Assert
+            var partsVisibility = GetPreviewValue("22843a82efe942b2b89437e4a115e69a");
+            Assert.AreEqual("ShowPartsAndOriginal", partsVisibility);
         }
     }
 }

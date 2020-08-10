@@ -106,11 +106,29 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot get location of attached group..
+        /// </summary>
+        internal static string AttachedGroupLocation {
+            get {
+                return ResourceManager.GetString("AttachedGroupLocation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Cannot get base or survey point from document..
         /// </summary>
         internal static string CannotGetBaseOrSurveyPoint {
             get {
                 return ResourceManager.GetString("CannotGetBaseOrSurveyPoint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This is the last opened view {0} , can&apos;t be delete.
+        /// </summary>
+        internal static string CantCloseLastOpenView {
+            get {
+                return ResourceManager.GetString("CantCloseLastOpenView", resourceCulture);
             }
         }
         
@@ -138,6 +156,24 @@ namespace Revit.Properties {
         internal static string CellForPanelNotFound {
             get {
                 return ResourceManager.GetString("CellForPanelNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Getting child elements is not supported for this type of Element..
+        /// </summary>
+        internal static string ChildElementsNotSupported {
+            get {
+                return ResourceManager.GetString("ChildElementsNotSupported", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The input PolyCurve is closed..
+        /// </summary>
+        internal static string CloseInputPolyCurveError {
+            get {
+                return ResourceManager.GetString("CloseInputPolyCurveError", resourceCulture);
             }
         }
         
@@ -295,6 +331,33 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Document is not a valid Family Document..
+        /// </summary>
+        internal static string DocumentNotFamilyDocument {
+            get {
+                return ResourceManager.GetString("DocumentNotFamilyDocument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current Document is not workshared.
+        /// </summary>
+        internal static string DocumentNotWorkshared {
+            get {
+                return ResourceManager.GetString("DocumentNotWorkshared", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Please use Sheet.Duplicate node to Duplicate sheets.
+        /// </summary>
+        internal static string DuplicateViewCantApplySheet {
+            get {
+                return ResourceManager.GetString("DuplicateViewCantApplySheet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Dynamo Data.
         /// </summary>
         internal static string Dynamo_AVF_Data_Name {
@@ -327,6 +390,42 @@ namespace Revit.Properties {
         internal static string ElementCannotBeAnnotatedError {
             get {
                 return ResourceManager.GetString("ElementCannotBeAnnotatedError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This Element {0} {1} cannot be deleted.
+        /// </summary>
+        internal static string ElementCantDelete {
+            get {
+                return ResourceManager.GetString("ElementCantDelete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to There is no ElementType of the given name in the current Document.
+        /// </summary>
+        internal static string ElementTypeNameNotFound {
+            get {
+                return ResourceManager.GetString("ElementTypeNameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot place empty schedule on sheet..
+        /// </summary>
+        internal static string EmptySchedule {
+            get {
+                return ResourceManager.GetString("EmptySchedule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot place empty view on sheet..
+        /// </summary>
+        internal static string EmptyView {
+            get {
+                return ResourceManager.GetString("EmptyView", resourceCulture);
             }
         }
         
@@ -439,6 +538,15 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Family type does not exist in the document..
+        /// </summary>
+        internal static string FamilyTypeDoesNotExist {
+            get {
+                return ResourceManager.GetString("FamilyTypeDoesNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The file could not be found at: {0}.
         /// </summary>
         internal static string FileNotFound {
@@ -538,6 +646,15 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Id is not a valid ElementId, GUID, string or int..
+        /// </summary>
+        internal static string InvalidElementId {
+            get {
+                return ResourceManager.GetString("InvalidElementId", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The location of the structural element is not a valid curve..
         /// </summary>
         internal static string InvalidElementLocation {
@@ -574,11 +691,29 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to {0} is not a valid GroupType..
+        /// </summary>
+        internal static string InvalidGroupType {
+            get {
+                return ResourceManager.GetString("InvalidGroupType", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Element does not have a host..
         /// </summary>
         internal static string InvalidHost {
             get {
                 return ResourceManager.GetString("InvalidHost", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid PathOfTravel element..
+        /// </summary>
+        internal static string InvalidPathOfTravel {
+            get {
+                return ResourceManager.GetString("InvalidPathOfTravel", resourceCulture);
             }
         }
         
@@ -597,6 +732,15 @@ namespace Revit.Properties {
         internal static string InvalidStartPointList {
             get {
                 return ResourceManager.GetString("InvalidStartPointList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Geometry join order can only be switched when the elements are already joined..
+        /// </summary>
+        internal static string InvalidSwitchJoinOrder {
+            get {
+                return ResourceManager.GetString("InvalidSwitchJoinOrder", resourceCulture);
             }
         }
         
@@ -691,11 +835,56 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Element has no child Elements.
+        /// </summary>
+        internal static string NoChildElements {
+            get {
+                return ResourceManager.GetString("NoChildElements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No Elements to purge in the current document..
+        /// </summary>
+        internal static string NoElementsToPurge {
+            get {
+                return ResourceManager.GetString("NoElementsToPurge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Elements are not intersecting.
+        /// </summary>
+        internal static string NonIntersectingElements {
+            get {
+                return ResourceManager.GetString("NonIntersectingElements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Element has no parent component.
+        /// </summary>
+        internal static string NoParentElement {
+            get {
+                return ResourceManager.GetString("NoParentElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to No shared parameter file found..
         /// </summary>
         internal static string NoSharedParameterFileFound {
             get {
                 return ResourceManager.GetString("NoSharedParameterFileFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to FloorType has no structural material assigned.
+        /// </summary>
+        internal static string NoStructuralMaterialAssigned {
+            get {
+                return ResourceManager.GetString("NoStructuralMaterialAssigned", resourceCulture);
             }
         }
         
@@ -709,11 +898,47 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Element not valid. Use an element from a BuiltInCategory..
+        /// </summary>
+        internal static string NotBuiltInCategory {
+            get {
+                return ResourceManager.GetString("NotBuiltInCategory", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to You need at least two elements for a dimension..
         /// </summary>
         internal static string NotEnoughDataError {
             get {
                 return ResourceManager.GetString("NotEnoughDataError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Element is not a Host Element.
+        /// </summary>
+        internal static string NotHostElement {
+            get {
+                return ResourceManager.GetString("NotHostElement", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Cannot unjoin Elements that are not already joined..
+        /// </summary>
+        internal static string NotJoinedElements {
+            get {
+                return ResourceManager.GetString("NotJoinedElements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The provided input view is not a plan view..
+        /// </summary>
+        internal static string NotPlanView {
+            get {
+                return ResourceManager.GetString("NotPlanView", resourceCulture);
             }
         }
         
@@ -880,6 +1105,15 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Rooms are required to compute longest Paths of Travel..
+        /// </summary>
+        internal static string RoomsForLongestPathNotFound {
+            get {
+                return ResourceManager.GetString("RoomsForLongestPathNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The number of sample points and number of samples must be the same..
         /// </summary>
         internal static string SamplePointsMismatchError {
@@ -907,11 +1141,47 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Must supply more than 0 locations..
+        /// </summary>
+        internal static string Sheet_NoLocationSet {
+            get {
+                return ResourceManager.GetString("Sheet_NoLocationSet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Must supply more than 0 views.
         /// </summary>
         internal static string Sheet_NoViewsError {
             get {
                 return ResourceManager.GetString("Sheet_NoViewsError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View count should Equals location count..
+        /// </summary>
+        internal static string Sheet_ViewLocationMismatch {
+            get {
+                return ResourceManager.GetString("Sheet_ViewLocationMismatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You must set a prefix or suffix to avoid duplicate sheet number.
+        /// </summary>
+        internal static string SheetDuplicateNeedFix {
+            get {
+                return ResourceManager.GetString("SheetDuplicateNeedFix", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The Sheet number {0} exists, please change your prefix or suffix.
+        /// </summary>
+        internal static string SheetNumberExists {
+            get {
+                return ResourceManager.GetString("SheetNumberExists", resourceCulture);
             }
         }
         
@@ -997,11 +1267,47 @@ namespace Revit.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Cannot place view on sheet as it is already on a sheet..
+        /// </summary>
+        internal static string ViewAlreadyPlacedOnSheet {
+            get {
+                return ResourceManager.GetString("ViewAlreadyPlacedOnSheet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This View {0} can&apos;t be duplicated.
+        /// </summary>
+        internal static string ViewCantBeDuplicated {
+            get {
+                return ResourceManager.GetString("ViewCantBeDuplicated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to View {0} could not be packed on the Sheet.  The sheet is {1} x {2} and the view to be added is {3} x {4}.
+        /// </summary>
+        internal static string ViewCantPackOnSheet {
+            get {
+                return ResourceManager.GetString("ViewCantPackOnSheet", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to View does not support annotations..
         /// </summary>
         internal static string ViewDoesNotSupportAnnotations {
             get {
                 return ResourceManager.GetString("ViewDoesNotSupportAnnotations", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to ViewDuplicateOption is invalid, please set input number should be 0, 1, 2.
+        /// </summary>
+        internal static string ViewDuplicateOptionOutofRange {
+            get {
+                return ResourceManager.GetString("ViewDuplicateOptionOutofRange", resourceCulture);
             }
         }
         
@@ -1020,6 +1326,15 @@ namespace Revit.Properties {
         internal static string ViewExportImageLockedError {
             get {
                 return ResourceManager.GetString("ViewExportImageLockedError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The View name {0} exists, please change your prefix or suffix.
+        /// </summary>
+        internal static string ViewNameExists {
+            get {
+                return ResourceManager.GetString("ViewNameExists", resourceCulture);
             }
         }
         
@@ -1047,6 +1362,15 @@ namespace Revit.Properties {
         internal static string WallTypeNotFound {
             get {
                 return ResourceManager.GetString("WallTypeNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Input value for this parameter needs to be of type {0}..
+        /// </summary>
+        internal static string WrongStorageType {
+            get {
+                return ResourceManager.GetString("WrongStorageType", resourceCulture);
             }
         }
     }

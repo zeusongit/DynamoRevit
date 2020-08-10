@@ -151,7 +151,7 @@ namespace RevitSystemTests
             RunCurrentModel();
 
             //assert no adaptive components in the model
-            Assert.AreEqual(0, GetAllFamilyInstances(true).Count);
+            Assert.AreEqual(0, TestUtils.GetAllFamilyInstances().Count);
 
         }
 
@@ -217,7 +217,7 @@ namespace RevitSystemTests
             }
         }
 
-        [Test, Ignore, Category("Failure")]
+        [Test]
         [TestModel(@".\AdaptiveComponent\AdaptiveComponent.rfa")]
         public void AdaptiveComponent()
         {

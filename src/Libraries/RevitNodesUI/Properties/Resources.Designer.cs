@@ -19,7 +19,7 @@ namespace DSRevitNodesUI.Properties {
     // class via a tool like ResGen or Visual Studio.
     // To add or remove a member, edit your .ResX file then rerun ResGen
     // with the /str option, or rebuild your VS project.
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "15.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -57,6 +57,15 @@ namespace DSRevitNodesUI.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Returns a list of all instances of the selected warning type..
+        /// </summary>
+        internal static string AllWarningsOfTypeDescription {
+            get {
+                return ResourceManager.GetString("AllWarningsOfTypeDescription", resourceCulture);
             }
         }
         
@@ -106,6 +115,15 @@ namespace DSRevitNodesUI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Gets the Element with the specified Id.
+        /// </summary>
+        internal static string ElementById {
+            get {
+                return ResourceManager.GetString("ElementById", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Get all the elements at the specified Level from the model..
         /// </summary>
         internal static string ElementsatLevelDescription {
@@ -129,6 +147,15 @@ namespace DSRevitNodesUI.Properties {
         internal static string ElementsofCategoryDescription {
             get {
                 return ResourceManager.GetString("ElementsofCategoryDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Get all elements of the specified category in the specified view from the model..
+        /// </summary>
+        internal static string ElementsofCategoryInViewDescription {
+            get {
+                return ResourceManager.GetString("ElementsofCategoryInViewDescription", resourceCulture);
             }
         }
         
@@ -322,6 +349,15 @@ namespace DSRevitNodesUI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to No warnings in the current document..
+        /// </summary>
+        internal static string NoWarningsInDocument {
+            get {
+                return ResourceManager.GetString("NoWarningsInDocument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select a parameter type..
         /// </summary>
         internal static string ParameterTypeSelectorDescription {
@@ -372,6 +408,15 @@ namespace DSRevitNodesUI.Properties {
         internal static string PortDataAllVisibleElementsToolTip {
             get {
                 return ResourceManager.GetString("PortDataAllVisibleElementsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Element Id as string, int or ElementId.
+        /// </summary>
+        internal static string PortDataByElementId {
+            get {
+                return ResourceManager.GetString("PortDataByElementId", resourceCulture);
             }
         }
         
@@ -448,11 +493,56 @@ namespace DSRevitNodesUI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Not Enclosed Rooms in the document.
+        /// </summary>
+        internal static string PortDataNotEnclosedRoomsToolTip {
+            get {
+                return ResourceManager.GetString("PortDataNotEnclosedRoomsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Placed Rooms in the document.
+        /// </summary>
+        internal static string PortDataPlacedRoomsToolTip {
+            get {
+                return ResourceManager.GetString("PortDataPlacedRoomsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Redundant Rooms in the document.
+        /// </summary>
+        internal static string PortDataRedundantRoomsToolTip {
+            get {
+                return ResourceManager.GetString("PortDataRedundantRoomsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SunSettings element..
         /// </summary>
         internal static string PortDataSunSettingToolTip {
             get {
                 return ResourceManager.GetString("PortDataSunSettingToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Unplaced Rooms in the document.
+        /// </summary>
+        internal static string PortDataUnplacedRoomsToolTip {
+            get {
+                return ResourceManager.GetString("PortDataUnplacedRoomsToolTip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The View.
+        /// </summary>
+        internal static string PortDataViewToolTip {
+            get {
+                return ResourceManager.GetString("PortDataViewToolTip", resourceCulture);
             }
         }
         
@@ -493,19 +583,38 @@ namespace DSRevitNodesUI.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Select a Schedule Type..
+        ///   Looks up a localized string similar to All roof types in the current document..
         /// </summary>
-        internal static string ScheduleTypeSelectorDescription {
+        internal static string RoofTypesDescription {
             get {
-                return ResourceManager.GetString("ScheduleTypeSelectorDescription", resourceCulture);
+                return ResourceManager.GetString("RoofTypesDescription", resourceCulture);
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to Returns all rooms in the document grouped by status.
+        /// </summary>
+        internal static string RoomsByStatusDescription {
+            get {
+                return ResourceManager.GetString("RoomsByStatusDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A View Schedule Filter Type..
         /// </summary>
         internal static string ScheduleFilterTypeDescription {
             get {
                 return ResourceManager.GetString("ScheduleFilterTypeDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select a Schedule Type..
+        /// </summary>
+        internal static string ScheduleTypeSelectorDescription {
+            get {
+                return ResourceManager.GetString("ScheduleTypeSelectorDescription", resourceCulture);
             }
         }
         
@@ -582,11 +691,29 @@ namespace DSRevitNodesUI.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select a model element from the Revit document filtered by Category..
+        /// </summary>
+        internal static string SelectModelElementByCategoryDescription {
+            get {
+                return ResourceManager.GetString("SelectModelElementByCategoryDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Select a model element from the document..
         /// </summary>
         internal static string SelectModelElementDescription {
             get {
                 return ResourceManager.GetString("SelectModelElementDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Select multiple elements from the Revit document filtered by Category..
+        /// </summary>
+        internal static string SelectModelElementsByCategoryDescription {
+            get {
+                return ResourceManager.GetString("SelectModelElementsByCategoryDescription", resourceCulture);
             }
         }
         
@@ -614,6 +741,15 @@ namespace DSRevitNodesUI.Properties {
         internal static string SelectUVonFaceDescription {
             get {
                 return ResourceManager.GetString("SelectUVonFaceDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All sheets available in the current document..
+        /// </summary>
+        internal static string SheetsDescription {
+            get {
+                return ResourceManager.GetString("SheetsDescription", resourceCulture);
             }
         }
         
@@ -686,6 +822,15 @@ namespace DSRevitNodesUI.Properties {
         internal static string ViewDetailLevelDescription {
             get {
                 return ResourceManager.GetString("ViewDetailLevelDescription", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All view family types in the current document..
+        /// </summary>
+        internal static string ViewFamilyTypesDescription {
+            get {
+                return ResourceManager.GetString("ViewFamilyTypesDescription", resourceCulture);
             }
         }
         

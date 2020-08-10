@@ -17,17 +17,17 @@ namespace Revit.Elements.Views
         /// <summary>
         /// Private constructor
         /// </summary>
-        private FloorPlanView(Autodesk.Revit.DB.ViewPlan view)
-        {
-            SafeInit(() => InitFloorPlanView(view));
-        }
-
-        /// <summary>
-        /// Private constructor
-        /// </summary>
         private FloorPlanView(Autodesk.Revit.DB.Level level)
         {
             SafeInit(() => InitFloorPlanView(level));
+        }
+
+        /// <summary>
+        /// Create a Revit Floor Plan from Autodesk View Plan
+        /// </summary>
+        private FloorPlanView(Autodesk.Revit.DB.ViewPlan view)
+        {
+            SafeInit(() => InitFloorPlanView(view));
         }
 
         #endregion

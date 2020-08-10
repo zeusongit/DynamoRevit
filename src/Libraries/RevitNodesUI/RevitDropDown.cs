@@ -22,6 +22,11 @@ using Family = Autodesk.Revit.DB.Family;
 using FamilySymbol = Autodesk.Revit.DB.FamilySymbol;
 using Level = Autodesk.Revit.DB.Level;
 using Parameter = Autodesk.Revit.DB.Parameter;
+using Revit.Application;
+using System.Text.RegularExpressions;
+
+using RevitServices.Elements;
+using RevitServices.Transactions;
 
 namespace DSRevitNodesUI
 {
@@ -40,15 +45,16 @@ namespace DSRevitNodesUI
 
     public abstract class RevitDropDownBase : DSDropDownBase
     {
-
         protected RevitDropDownBase(string value) : base(value)
         {
+            RevitServicesUpdater.Instance.ElementsUpdated += Updater_ElementsUpdated;
             DynamoRevitApp.EventHandlerProxy.DocumentOpened += Controller_RevitDocumentChanged;
         }
 
         [JsonConstructor]
         public RevitDropDownBase(string value, IEnumerable<PortModel> inPorts, IEnumerable<PortModel> outPorts) : base(value, inPorts, outPorts)
         {
+            RevitServicesUpdater.Instance.ElementsUpdated += Updater_ElementsUpdated;
             DynamoRevitApp.EventHandlerProxy.DocumentOpened += Controller_RevitDocumentChanged;
         }
 
@@ -57,8 +63,33 @@ namespace DSRevitNodesUI
             PopulateItems();
         }
 
+        private void Updater_ElementsUpdated(object sender, ElementUpdateEventArgs e)
+        {
+            bool dynamoTransaction = e.Transactions.Contains(TransactionWrapper.TransactionName);
+            switch (e.Operation)
+            {
+                case ElementUpdateEventArgs.UpdateType.Added:
+                    break;
+                case ElementUpdateEventArgs.UpdateType.Modified:                    
+                    if (!dynamoTransaction)
+                    {
+                        Updater_ElementsModified(e.GetUniqueIds());
+                    }
+                    break;
+                case ElementUpdateEventArgs.UpdateType.Deleted:
+                    if (!dynamoTransaction)
+                    {
+                        Updater_ElementsDeleted(e.RevitDocument, e.Elements);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
         public override void Dispose()
         {
+            RevitServicesUpdater.Instance.ElementsUpdated -= Updater_ElementsUpdated;
             DynamoRevitApp.EventHandlerProxy.DocumentOpened -= Controller_RevitDocumentChanged;
             base.Dispose();
         }
@@ -78,6 +109,36 @@ namespace DSRevitNodesUI
             if (!string.IsNullOrEmpty(selectedValueToIgnore) && Items[SelectedIndex].Name == selectedValueToIgnore)
                 return false;
             return true;
+        }
+
+        void Updater_ElementsModified(IEnumerable<string> updated)
+        {
+            // If nothing has been updated, then return
+
+            if (!updated.Any())
+                return;
+
+            // If the updated list doesn't include any objects in the current selection
+            // then return;
+            if (!Items.Where(x => ((Element)(x.Item)).IsValidObject).Select(x => ((Element)(x.Item)).UniqueId).Any(updated.Contains))
+            {
+                return;
+            }
+
+            PopulateItems();
+            OnNodeModified(true);
+        }
+        void Updater_ElementsDeleted(Autodesk.Revit.DB.Document document, IEnumerable<ElementId> deleted)
+        {
+            if (!deleted.Any())
+                return;
+            if(!Items.Select(x => !((Element)(x.Item)).IsValidObject).Any())
+            {
+                return;
+            }
+
+            PopulateItems();
+            OnNodeModified(true);
         }
     }
 
@@ -248,7 +309,7 @@ namespace DSRevitNodesUI
             // and add type parameters to the list
             if (e.CanHaveTypeAssigned())
             {
-                ElementType et = DocumentManager.Instance.CurrentDBDocument.GetElement(e.GetTypeId()) as ElementType;
+                Autodesk.Revit.DB.ElementType et = DocumentManager.Instance.CurrentDBDocument.GetElement(e.GetTypeId()) as Autodesk.Revit.DB.ElementType;
                 if (et != null)
                 {
                     AddTypeParams(et);
@@ -256,7 +317,7 @@ namespace DSRevitNodesUI
             }
         }
 
-        private void AddTypeParams(ElementType et)
+        private void AddTypeParams(Autodesk.Revit.DB.ElementType et)
         {
             foreach (Parameter p in et.Parameters)
             {
@@ -457,6 +518,59 @@ namespace DSRevitNodesUI
                 AstFactory.BuildStringNode(((Autodesk.Revit.DB.WallType) Items[SelectedIndex].Item).Name)
             };
             var functionCall = AstFactory.BuildFunctionCall("Revit.Elements.WallType",
+                                                            "ByName",
+                                                            args);
+
+            return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), functionCall) };
+        }
+    }
+
+    [NodeName("Roof Types")]
+    [NodeCategory(BuiltinNodeCategories.REVIT_SELECTION)]
+    [NodeDescription("RoofTypesDescription", typeof(Properties.Resources))]
+    [IsDesignScriptCompatible]
+    public class RoofTypes : RevitDropDownBase
+    {
+        private const string outputName = "Roof Types";
+
+        public RoofTypes() : base(outputName) { }
+
+        [JsonConstructor]
+        public RoofTypes(IEnumerable<PortModel> inPorts, IEnumerable<PortModel> outPorts) : base(outputName, inPorts, outPorts) { }
+
+        protected override SelectionState PopulateItemsCore(string currentSelection)
+        {
+            Items.Clear();
+
+            var elements = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument)
+                .OfClass(typeof(Autodesk.Revit.DB.RoofType))
+                .ToElements();
+
+            if (!elements.Any())
+            {
+                Items.Add(new DynamoDropDownItem(Properties.Resources.NoWallTypesAvailable, null));
+                SelectedIndex = 0;
+                return SelectionState.Done;
+            }
+
+            Items = elements
+                .Select(x => new DynamoDropDownItem(x.Name, x))
+                .OrderBy(x => x.Name)
+                .ToObservableCollection();
+
+            return SelectionState.Restore;
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            if (!CanBuildOutputAst(Properties.Resources.NoWallTypesAvailable))
+                return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), AstFactory.BuildNullNode()) };
+
+            var args = new List<AssociativeNode>
+            {
+                AstFactory.BuildStringNode(((Autodesk.Revit.DB.RoofType) Items[SelectedIndex].Item).Name)
+            };
+            var functionCall = AstFactory.BuildFunctionCall("Revit.Elements.RoofType",
                                                             "ByName",
                                                             args);
 
@@ -929,5 +1043,219 @@ namespace DSRevitNodesUI
         }
     }
 
-        
+    [NodeName("All Warnings of Type")]
+    [NodeCategory(BuiltinNodeCategories.REVIT_WARNING)]
+    [NodeDescription("AllWarningsOfTypeDescription", typeof(DSRevitNodesUI.Properties.Resources))]
+    [IsDesignScriptCompatible]
+    public class AllWarningsOfType : RevitDropDownBase
+    {
+        private const string outputName = "Warnings";
+        private const int MaxChars = 50;
+
+        public AllWarningsOfType() : base(outputName) { }
+
+        [JsonConstructor]
+        public AllWarningsOfType(IEnumerable<PortModel> inPorts, IEnumerable<PortModel> outPorts) : base(outputName, inPorts, outPorts) { }
+
+        protected override SelectionState PopulateItemsCore(string currentSelection)
+        {
+            Items.Clear();
+            Autodesk.Revit.DB.Document document = DocumentManager.Instance.CurrentDBDocument;
+
+            // find all unique warnings in the project
+            var warnings = DocumentManager.Instance.CurrentDBDocument
+                .GetWarnings()
+                .GroupBy(warn => warn.GetFailureDefinitionId().Guid.ToString())
+                .Select(group => group.First())
+                .ToList();
+
+            if (warnings.Count < 1)
+            {
+                // if there are no warnings in the current document
+                // show "NoWarningsInDocument" string in the dropdown.
+                Items.Add(new DynamoDropDownItem(Properties.Resources.NoWarningsInDocument, null));
+                return SelectionState.Restore;
+            };
+
+            for (int i = 0; i < warnings.Count; i++)
+            {
+                var warningText = WrapText(warnings[i].GetDescriptionText(), MaxChars);
+                Items.Add(new DynamoDropDownItem(warningText, warnings[i]));
+            }
+            Items = Items.OrderBy(x => x.Name).ToObservableCollection();
+
+            return SelectionState.Restore;
+        }
+
+        /// <summary>
+        /// Wraps a string by inserting a newline af n amount if characters.
+        /// </summary>
+        /// <param name="inputText"></param>
+        /// <param name="lineLength"></param>
+        /// <returns></returns>
+        private static string WrapText(string inputText, int lineLength)
+        {
+            string[] stringSplit = inputText.Split(' ');
+            int charCounter = 0;
+            string finalString = "";
+
+            for (int i = 0; i < stringSplit.Length; i++)
+            {
+                finalString += stringSplit[i] + " ";
+                charCounter += stringSplit[i].Length;
+
+                if (charCounter > lineLength)
+                {
+                    finalString += "\n";
+                    charCounter = 0;
+                }
+            }
+            return finalString;
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            AssociativeNode node;
+            if (!CanBuildOutputAst())
+            {
+                node = AstFactory.BuildNullNode();
+            }
+            else
+            {
+                var warning = Items[SelectedIndex].Item as Autodesk.Revit.DB.FailureMessage;
+                if (warning == null)
+                {
+                    node = AstFactory.BuildNullNode();
+                }
+                else
+                {
+                    var guidNode = AstFactory.BuildStringNode(warning.GetFailureDefinitionId().Guid.ToString());
+                    node =
+                        AstFactory.BuildFunctionCall(
+                            new Func<string, object>(Revit.Application.Warning.GetWarningByGuid),
+                            new List<AssociativeNode>() { guidNode });
+                }
+            }
+            return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node) };
+        }
+
+    }
+
+    [NodeName("Sheets")]
+    [NodeCategory(BuiltinNodeCategories.REVIT_SELECTION)]
+    [NodeDescription("SheetsDescription", typeof(Properties.Resources))]
+    [IsDesignScriptCompatible]
+    public class Sheets : RevitDropDownBase
+    {
+        private const string outputName = "Sheet";
+
+        public Sheets() : base(outputName) { }
+
+        [JsonConstructor]
+        public Sheets(IEnumerable<PortModel> inPorts, IEnumerable<PortModel> outPorts) : base(outputName, inPorts, outPorts) { }
+
+        protected override SelectionState PopulateItemsCore(string currentSelection)
+        {
+            Items.Clear();
+
+            //find all views in the project
+            //exclude <RevisionSchedule> (revision tables on sheets) from list
+            var sheets = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument)
+                .OfClass(typeof(ViewSheet))
+                .ToList();
+
+            //there must always be at least 1 view in a Revit document, so we can exclude the empty list check
+            foreach (var s in sheets)
+            {
+                Items.Add(new DynamoDropDownItem(s.Name, s));
+            }
+            Items = Items.OrderBy(x => x.Name).ToObservableCollection();
+
+            return SelectionState.Restore;
+        }
+
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            if (!CanBuildOutputAst())
+                return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), AstFactory.BuildNullNode()) };
+
+
+            var view = Items[SelectedIndex].Item as View;
+            if (view == null)
+                return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), AstFactory.BuildNullNode()) };
+
+
+            var idNode = AstFactory.BuildStringNode(view.UniqueId);
+            var falseNode = AstFactory.BuildBooleanNode(true);
+
+            AssociativeNode node =
+                AstFactory.BuildFunctionCall(
+                    new Func<string, bool, object>(ElementSelector.ByUniqueId),
+                    new List<AssociativeNode>() { idNode, falseNode });
+
+            return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node) };
+        }
+    }
+
+    [NodeName("View Family Types")]
+    [NodeCategory(BuiltinNodeCategories.REVIT_SELECTION)]
+    [NodeDescription("ViewFamilyTypesDescription", typeof(Properties.Resources))]
+    [IsDesignScriptCompatible]
+    public class ViewFamilyTypes : RevitDropDownBase
+    {
+        private const string outputName = "ViewFamilyType";
+
+        public ViewFamilyTypes() : base(outputName) { }
+
+        [JsonConstructor]
+        public ViewFamilyTypes(IEnumerable<PortModel> inPorts, IEnumerable<PortModel> outPorts) : base(outputName, inPorts, outPorts) { }
+
+        protected override SelectionState PopulateItemsCore(string currentSelection)
+        {
+            Items.Clear();
+
+            //find all views in the project
+            //exclude <RevisionSchedule> (revision tables on sheets) from list
+            var viewFamilyTypes = new FilteredElementCollector(DocumentManager.Instance.CurrentDBDocument)
+                .OfClass(typeof(ViewFamilyType))
+                .ToList();
+
+            //there must always be at least 1 view in a Revit document, so we can exclude the empty list check
+            foreach (var i in viewFamilyTypes)
+            {
+                Items.Add(new DynamoDropDownItem(i.Name, i));
+            }
+            Items = Items.OrderBy(x => x.Name).ToObservableCollection();
+
+            return SelectionState.Restore;
+        }
+        public override IEnumerable<AssociativeNode> BuildOutputAst(List<AssociativeNode> inputAstNodes)
+        {
+            AssociativeNode node;
+            if (!CanBuildOutputAst())
+            {
+                node = AstFactory.BuildNullNode();
+            }
+            else
+            {
+                var view = Items[SelectedIndex].Item as ViewFamilyType;
+                if (view == null)
+                {
+                    node = AstFactory.BuildNullNode();
+                }
+                else
+                {
+                    var idNode = AstFactory.BuildStringNode(view.UniqueId);
+                    var falseNode = AstFactory.BuildBooleanNode(true);
+
+                    node =
+                        AstFactory.BuildFunctionCall(
+                            new Func<string, bool, object>(ElementSelector.ByUniqueId),
+                            new List<AssociativeNode>() { idNode, falseNode });
+                }
+            }
+
+            return new[] { AstFactory.BuildAssignment(GetAstIdentifierForOutputIndex(0), node) };
+        }
+    }
 }
