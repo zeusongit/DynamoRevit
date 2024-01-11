@@ -1,3 +1,6 @@
+## 0.5.20
+* Update GregRevitAuth to latest version (2.0.8776.26607)
+
 ## 0.5.19
 * Update / Change Dynamo Core to 3.0.0-beta7040
 
